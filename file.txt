@@ -1,307 +1,306 @@
-C LANGUAGE STUDY NOTES — B00 TO B10
-Nguồn: các outline [x] trong material.md, nhánh master.
-Mỗi dòng là một câu trả lời/nghi chú ngắn để ôn tập.
+C LANGUAGE — GIẢI ĐÁP CHI TIẾT B00–B10
+Nguồn outline: material.md trên nhánh master. Các thuật ngữ tiếng Anh được giữ nguyên như đề mục.
 
 B00 — C Basics Refresher
 [x] Cấu trúc chương trình C17, kiểu dữ liệu, toán tử và luồng điều khiển
-    Answer: Chương trình C gồm tiền xử lý, khai báo, hàm main và các hàm; dùng kiểu số/ký tự, toán tử và if/switch/loop để điều khiển luồng.
+    Chương trình thường có #include, khai báo, hàm main và hàm phụ. Kiểu dữ liệu quyết định cách biểu diễn giá trị; toán tử tạo biểu thức; if/switch/for/while quyết định thứ tự chạy. Compiler dịch từng translation unit rồi linker ghép thành executable.
 [x] Hàm, prototype, phạm vi và vòng đời biến cơ bản
-    Answer: Prototype khai báo chữ ký trước khi gọi; biến local sống trong block/lời gọi, static sống toàn chương trình, global có phạm vi file/chương trình.
+    Prototype phải xuất hiện trước lần gọi để compiler kiểm tra kiểu. Local variable có block scope và automatic lifetime; static local giữ giá trị giữa các lần gọi; global có static storage duration. static ở file scope giới hạn linkage trong file.
 [x] Mảng, chuỗi ký tự và thao tác dữ liệu có giới hạn
-    Answer: Mảng có kích thước cố định; chuỗi C kết thúc bằng '\0'; luôn truyền kích thước buffer và dùng hàm có giới hạn để tránh tràn.
+    int a[4] chỉ có index 0..3. Chuỗi C là char array kết thúc bằng '\0', nên char s[4] chỉ chứa tối đa ba ký tự. Luôn nhận capacity như tham số và kiểm tra độ dài trước memcpy/strncpy/snprintf.
 [x] Con trỏ cơ bản, const-correctness và quy trình biên dịch/gỡ lỗi với GCC
-    Answer: Con trỏ lưu địa chỉ; const thể hiện dữ liệu/địa chỉ không được sửa; biên dịch với -Wall -Wextra -g và gỡ lỗi bằng gdb/sanitizer.
+    int *p=&x cho phép đọc/ghi x qua *p; không dereference NULL hoặc pointer hết lifetime. const int *p bảo vệ dữ liệu qua p. Build nên dùng gcc -std=c17 -Wall -Wextra -Wpedantic -g; dùng gdb, AddressSanitizer/UBSan và warning để tìm lỗi.
 
 B01 — Variables and Data Types
 [x] Introductory question?
-    Answer: Biến là vùng nhớ có tên, kiểu dữ liệu quyết định kích thước, miền giá trị và cách diễn giải bit.
+    Biến là object có tên, kiểu và lifetime; giá trị của nó nằm trong bộ nhớ hoặc register. Khi chọn kiểu, cần biết range, signedness, kích thước do implementation/ABI quyết định và yêu cầu của dữ liệu, thay vì đoán int luôn 32 bit.
 [x] Basic Data Types
-    Answer: Các kiểu cơ bản là char, integer, float/double, void và các biến thể signed/unsigned/short/long.
+    char lưu một byte; short/int/long/long long là integer; float/double/long double là floating point; void biểu thị không có giá trị/kiểu đối tượng. Dùng <stdint.h> như uint32_t khi cần chính xác bề rộng; unsigned không phù hợp để “chữa” mọi lỗi số âm.
 [x] Store Class
-    Answer: auto, register, static và extern quy định storage duration, linkage và phạm vi truy cập.
+    auto là mặc định cho local; register chỉ là gợi ý và không bảo đảm register; static cho static storage duration; extern tham chiếu định nghĩa ở nơi khác. Cần phân biệt storage duration với scope và linkage vì chúng là ba khái niệm khác nhau.
 [x] Key word for variable
-    Answer: Từ khóa thường gặp: const, volatile, restrict, static, extern, typedef và _Atomic; mỗi từ khóa thay đổi ngữ nghĩa hoặc tối ưu hóa.
+    const cấm sửa qua tên đó; volatile yêu cầu thực hiện load/store quan sát được, thường cho MMIO; restrict là cam kết không alias trong vùng truy cập; _Atomic hỗ trợ đồng bộ. typedef tạo bí danh kiểu, không tạo kiểu runtime mới.
 [x] Pointer variable
-    Answer: Biến con trỏ chứa địa chỉ của đối tượng có kiểu xác định; phải khởi tạo hợp lệ trước khi dereference.
+    Pointer lưu địa chỉ object/hàm cùng kiểu; khai báo int *p, q chỉ làm p là pointer còn q là int. Khởi tạo bằng &object, NULL hoặc kết quả allocation; trước *p phải xác minh pointer trỏ tới object sống, aligned và thuộc phạm vi hợp lệ.
 [x] Struct Data type
-    Answer: struct gom nhiều trường có thể khác kiểu thành một bản ghi; layout có thể có padding để bảo đảm alignment.
+    struct kết hợp các field khác kiểu thành record có layout cố định theo compiler/ABI. Padding có thể xuất hiện giữa field và cuối struct; sizeof(struct) không nhất thiết là tổng sizeof từng field. Sắp field lớn trước nhỏ có thể giảm padding.
 [x] Structure
-    Answer: Khai báo struct bằng các field; dùng . cho object và -> cho pointer tới struct.
+    Ví dụ struct Point { int x, y; }; struct Point p={.x=1,.y=2};. Truy cập object bằng p.x, pointer bằng pp->x. Khi API nhận struct pointer, kiểm tra NULL và quy định rõ ai sở hữu bộ nhớ field động.
 [x] Union
-    Answer: union cho các thành viên dùng chung một vùng nhớ; chỉ nên đọc thành viên đang được ghi hợp lệ gần nhất.
+    union dùng chung bộ nhớ cho các member, nên sizeof thường bằng member lớn nhất cộng alignment. Nó phù hợp dữ liệu “một trong nhiều dạng”, nhưng phải lưu tag riêng để biết member nào đang active; đọc member khác có thể phụ thuộc implementation.
 [x] Enum
-    Answer: enum đặt tên cho các hằng số nguyên, giúp mã nguồn dễ đọc và giảm magic number.
+    enum tạo các named integer constants, ví dụ enum State { IDLE, RUNNING, ERROR };. Nó làm switch dễ đọc hơn và giúp tránh magic number, nhưng trong C enum không tự bảo đảm range an toàn; hãy validate giá trị nhận từ bên ngoài.
 [x] Casting
-    Answer: Cast chuyển kiểu biểu diễn/diễn giải giá trị; dùng cẩn thận vì có thể mất dữ liệu, đổi dấu hoặc vi phạm aliasing.
+    Implicit conversion có thể đổi signedness/range; explicit cast chỉ nói “tôi chủ ý”, không làm thao tác tự an toàn. Trước cast hẹp cần kiểm tra range; tránh cast pointer để né warning, đặc biệt cast object pointer có alignment/aliasing không tương thích.
 
 B02 — Arrays, Decisions and Loops
 [x] 1 Array in C
-    Answer: Array là dãy phần tử cùng kiểu, liên tiếp trong bộ nhớ và có chỉ số từ 0 đến n-1.
+    Array là object gồm n phần tử cùng kiểu, nằm liên tiếp: int a[5]. Compiler không kiểm tra index; a[5] là undefined behavior. sizeof(a)/sizeof(a[0]) chỉ dùng được nơi a vẫn là array, không phải parameter đã decay thành pointer.
 [x] 1.1 What is Array?
-    Answer: Array cho phép lưu và xử lý nhiều giá trị đồng nhất bằng một tên và chỉ số.
+    Array cung cấp random access O(1) và locality tốt. Nó phù hợp kích thước biết trước hoặc upper bound rõ; nếu lượng dữ liệu thay đổi mạnh, dùng allocation động/vector tự quản lý hoặc cấu trúc khác.
 [x] 1.2 Multidimensional Arrays
-    Answer: Mảng đa chiều là mảng của mảng; C lưu theo row-major order, nên chiều cuối cần biết khi truyền vào hàm.
+    int m[ROWS][COLS] là array của ROWS array, lưu row-major. Hàm phải biết COLS để tính địa chỉ: void f(size_t r, size_t c, int a[r][c]);. int ** không tương đương với mảng 2D liên tiếp.
 [x] 1.3 Array in memory
-    Answer: Phần tử nằm liên tiếp; địa chỉ a[i] tương đương *(a+i), với bước nhảy bằng sizeof phần tử.
+    a[i] được định nghĩa là *(a+i); bước nhảy do kiểu phần tử quyết định. Pointer arithmetic chỉ hợp lệ trong cùng array và one-past-end chỉ được dùng so sánh, không được dereference.
 [x] 1.4 How to declare an Array?
-    Answer: Ví dụ int a[10]; hoặc int a[] = {1,2,3}; kích thước phải đủ cho initializer.
+    Khai báo int a[10]={0}; khởi tạo phần còn lại bằng 0; char s[]="abc" tạo bốn byte gồm terminator. VLA có hỗ trợ C11 tùy implementation và có nguy cơ làm đầy stack nếu kích thước lớn.
 [x] 1.5 How works with array?
-    Answer: Truy cập bằng index hợp lệ, duyệt bằng vòng lặp; C không tự kiểm tra boundary.
+    Duyệt với for (size_t i=0; i<n; ++i) và luôn truyền n vào hàm. Không dùng input làm index khi chưa validate; copy overlapping vùng nhớ dùng memmove thay vì memcpy.
 [x] 1.6 When will using Array?
-    Answer: Dùng array khi số phần tử tối đa biết trước, phần tử cùng kiểu và cần truy cập theo chỉ số nhanh.
+    Dùng array khi cần truy cập index nhanh, dữ liệu homogeneous và thứ tự liên tiếp quan trọng. Với queue bounded trong embedded, circular array thường dự đoán bộ nhớ tốt hơn linked list.
 [x] 2 Decision in C
-    Answer: Decision chọn nhánh thực thi dựa trên biểu thức điều kiện có giá trị khác 0 hoặc bằng 0.
+    Điều kiện C coi 0 là false, mọi giá trị khác 0 là true. Viết điều kiện rõ ràng, không nhầm = với ==, và không dựa vào side effect khó đọc trong condition.
 [x] 2.1 Introduce
-    Answer: C cung cấp if/else, switch và toán tử ?: để rẽ nhánh.
+    if/else phù hợp predicate tổng quát; switch phù hợp chọn theo integral/enum; ?: phù hợp chọn một expression ngắn. Cấu trúc rẽ nhánh nên bao phủ lỗi/default path, không chỉ happy path.
 [x] 2.2 How to build an expression?
-    Answer: Kết hợp toán tử số học, so sánh, logic và bitwise theo precedence; thêm ngoặc để làm rõ ý định.
+    Biểu thức gồm operand và operator; precedence quyết định thứ tự nhưng không luôn quyết định evaluation order. Dùng ngoặc cho logic quan trọng và tách expression có side effect để tránh undefined/unspecified behavior.
 [x] 2.3 If, else, condition Operator “?:”
-    Answer: if/else xử lý điều kiện tổng quát; ?: trả về một trong hai biểu thức và phù hợp với lựa chọn ngắn.
+    if/else thực thi statement, ?: tạo giá trị: max=(a>b)?a:b;. Chỉ một nhánh của ?: được đánh giá, nhưng cả hai nhánh cần có type tương thích. Dùng braces cho mọi if để tránh dangling else.
 [x] 2.4 Switch
-    Answer: switch chọn case theo giá trị integral/enum; dùng break để tránh fall-through khi không chủ ý.
+    switch expression là integer/enum; case là integral constant expression. Có break sau case nếu không chủ ý fall-through, có default để xử lý giá trị lạ; không dùng switch thay cho kiểm tra range khi input không tin cậy.
 [x] 3 Looping In C
-    Answer: for, while và do-while lặp khối lệnh; điều kiện phải có đường thoát rõ ràng.
+    for, while, do-while thực hiện lặp. Mỗi loop phải nêu rõ invariant, điều kiện dừng và bước tiến; khi duyệt buffer, dùng size_t và điều kiện i<n để không underflow.
 [x] 3.1 What is looping in C?
-    Answer: Loop lặp lại công việc cho đến khi điều kiện dừng, thường dùng để duyệt dữ liệu hoặc chờ trạng thái.
+    Loop lặp một thao tác đến khi trạng thái thỏa điều kiện dừng, ví dụ duyệt array hoặc đọc stream. Độ phức tạp loop lồng nhau cần được ước lượng vì n×m có thể trở thành bottleneck.
 [x] 3.3 Enter and exit, break looping follow
-    Answer: break thoát loop/switch gần nhất; continue bỏ phần còn lại của lần lặp hiện tại; return thoát hàm.
+    break thoát loop/switch gần nhất; continue sang iteration tiếp theo; return thoát hàm. Không dùng goto/break che giấu cleanup: với resource, hãy có một đường cleanup rõ ràng hoặc cờ trạng thái.
 [x] 3.4 How to use looping?
-    Answer: Chọn for khi có bước đếm rõ, while khi kiểm tra trước, do-while khi thân phải chạy ít nhất một lần.
+    for thích hợp khi init/test/update cùng chỗ; while khi số vòng chưa biết; do-while khi cần chạy ít nhất một lần. Tránh sửa biến loop ở nhiều vị trí vì làm khó chứng minh termination.
 [x] 3.5 Key for Looping
-    Answer: Khởi tạo đúng, điều kiện đúng, cập nhật đúng, tránh truy cập vượt mảng và tránh vòng lặp vô hạn.
+    Kiểm tra off-by-one, overflow counter, mutation của collection trong khi duyệt và điều kiện lỗi I/O. Compile warnings, test n=0/1/max và dùng assertion cho invariant quan trọng.
 
 B03 — Functions
 [x] 1 What is function
-    Answer: Function là khối mã tái sử dụng nhận tham số và có thể trả về kết quả.
+    Function đóng gói một nhiệm vụ có contract: input hợp lệ, output, side effect và lỗi. Hàm nhỏ, tên rõ, một trách nhiệm thường dễ test, tái dùng và review hơn.
 [x] 1.1 Syntax
-    Answer: Cú pháp cơ bản: return_type name(parameter_list) { body }.
+    return_type name(type parameter, ...) { statements; return value; }. Declaration phải khớp definition tuyệt đối về return type và parameter; void function không trả giá trị.
 [x] 1.2 Declaration and function prototype
-    Answer: Prototype cho compiler biết kiểu trả về và tham số trước khi hàm được gọi.
+    int sum(int, int); cho compiler biết interface trước call và ngăn default/implicit declaration lỗi thời. Đặt public declarations trong header có include guard; implementation nằm trong .c.
 [x] 1.3 Global function, Local function, function in single translate unit
-    Answer: Hàm file-scope có external linkage mặc định; static function có internal linkage trong một translation unit; C chuẩn không có local/nested function.
+    Hàm non-static ở file scope có external linkage và có thể link từ file khác. static function chỉ gọi trong translation unit hiện tại; C chuẩn không có nested/local function nên đừng phụ thuộc extension GCC.
 [x] 2 Inline keyword, inline function
-    Answer: inline là gợi ý/điều chỉnh linkage cho compiler, không bảo đảm hàm sẽ được inline.
+    inline không phải “ép compiler chèn code”; compiler quyết định dựa trên optimization và target. Trong C, quy tắc external definition của inline phức tạp, nên đặt static inline helper trong header khi muốn dùng nội bộ nhiều file.
 [x] 2.1 Compiler optimization use-case
-    Answer: Compiler có thể inline hàm nhỏ/hot để giảm overhead call, nhưng dựa vào tối ưu và profile.
+    Inlining hữu ích với accessor rất nhỏ ở hot path hoặc khi mở cơ hội constant propagation. Chỉ tối ưu sau profiling vì compiler thường đã làm tốt ở -O2; thay đổi source vô cớ có thể làm code kém hơn.
 [x] 2.2 Different in size, speed analysis
-    Answer: Inline có thể nhanh hơn do bỏ call overhead nhưng làm binary lớn hơn và gây pressure instruction cache.
+    Call có overhead truyền control/stack/register; inline có thể bỏ overhead. Đổi lại, code duplication tăng Flash và icache misses; đo size bằng map/size tool, đo speed trên target thật.
 [x] 3 Phân biệt macro-like function và function
-    Answer: Macro thay thế text, có thể đánh giá argument nhiều lần; function được type-check, đánh giá tham số một lần và dễ debug hơn.
+    #define SQR(x) ((x)*(x)) đánh giá SQR(i++) hai lần, còn static inline int sqr(int x) đánh giá một lần và type-check. Macro chỉ nên dùng cho conditional compilation, generic token operations hoặc constant thật sự cần thiết.
 [x] 4 Variable argument list
-    Answer: Variadic function dùng va_list, va_start, va_arg, va_end; phải có quy ước kiểu/số lượng tham số rõ ràng.
+    Variadic function phải có ít nhất một named parameter trước .... Dùng va_start/va_arg/va_end đúng type; caller và callee phải thống nhất format, vì va_arg sai type là undefined behavior. Prefer struct/array argument khi có thể.
 [x] 5 Function argument, function return
-    Answer: C truyền argument theo value; trả về một giá trị, còn nhiều kết quả thường dùng pointer output hoặc struct.
+    C pass-by-value: function nhận copy của argument. Return một object value, struct hoặc pointer; API cần ghi rõ ownership, NULL-on-error và ai cấp/giải phóng memory.
 [x] 5.1 Passing argument as value
-    Answer: Hàm nhận bản sao; sửa tham số không làm thay đổi biến của caller.
+    int f(int x) không đổi biến caller. Pass-by-value tốt cho scalar/small struct và giảm aliasing; với struct lớn, cân nhắc const pointer nếu không cần copy.
 [x] 5.2 Passing argument as reference
-    Answer: C mô phỏng pass-by-reference bằng cách truyền địa chỉ qua pointer và dereference trong hàm.
+    C không có pass-by-reference thật; truyền address: bool parse(..., Result *out). Validate out!=NULL trước khi ghi, và chỉ thay đổi *out sau khi input đã hợp lệ để tránh partial result.
 [x] 5.3 example
-    Answer: void swap(int *a,int *b) đổi hai giá trị sau khi kiểm tra pointer khác NULL.
+    bool swap(int *a,int *b) { if (!a||!b) return false; int t=*a; *a=*b; *b=t; return true; }. Caller gọi swap(&x,&y); hàm xử lý cả NULL, nhưng a==b vẫn an toàn.
 [x] Multiple input/multiple output function
-    Answer: Nhận nhiều input qua tham số và trả nhiều output qua pointer hoặc một struct result.
+    Nhiều input là các parameter; nhiều output dùng output pointer hoặc return struct. Với lỗi, return status enum/bool và ghi rõ output nào có giá trị khi fail; tránh trả nhiều pointer không có ownership.
 [x] Passing array as argument
-    Answer: Array decay thành pointer; luôn truyền length riêng và khai báo chiều sau với mảng đa chiều.
+    void f(const int a[], size_t n) thực chất nhận const int *a. Không thể suy ra n trong hàm; với mảng 2D khai báo dimension sau, ví dụ int a[][COLS].
 [x] return/passing pointer to diffrent kind of object
-    Answer: Không trả về địa chỉ biến local; chỉ chuyển đổi pointer khi alignment, lifetime và strict-aliasing đều hợp lệ.
+    Không return &local vì local chết sau return. void* có thể chuyển đổi object pointer trong C nhưng cast về đúng kiểu trước dùng; không cast để bỏ const, vi phạm alignment hoặc strict aliasing.
 [x] nested function
-    Answer: C chuẩn không hỗ trợ nested function; dùng static helper ở file scope hoặc callback/context thay thế.
+    Standard C chỉ cho phép function definition ở file scope. Dùng static helper, truyền context struct hoặc function pointer để thay thế; cách này portable và dễ test hơn extension nested function.
 [x] 6 Recursion
-    Answer: Recursion là hàm gọi lại chính nó và cần base case để dừng.
+    Recursion giải bài toán bằng bài toán nhỏ hơn cùng dạng, ví dụ tree traversal. Nó cần base case, progress và giới hạn depth; iteration thường an toàn hơn nếu input do người dùng kiểm soát.
 [x] 6.1 introduction to stack
-    Answer: Mỗi lời gọi dùng stack frame chứa tham số, local và địa chỉ trở về; recursion sâu có thể stack overflow.
+    Mỗi call có stack frame chứa return address, parameter và local automatic objects. Stack hữu hạn; local array lớn hoặc recursion sâu có thể overflow và gây crash khó dự đoán.
 [x] 6.2 how to create a recursion function
-    Answer: Xác định base case, bước giảm bài toán và bảo đảm mỗi lần gọi tiến gần base case.
+    Viết base case trước, xác định measure giảm dần, rồi gọi với input nhỏ hơn. Test base case, depth nhỏ và largest expected depth; không dùng recursion nếu không chứng minh được bound.
 
-B04 — Preprocessor, Macros and Bits
+B04 — Preprocessor, Macros and Bit Operations
 [x] 1 C Preprocessor Overview
-    Answer: Preprocessor xử lý #include, #define và conditional compilation trước khi compiler dịch mã C.
+    Preprocessor chạy trước compiler, xử lý directive bắt đầu bằng # và tạo expanded source. Nó không hiểu type hay scope C; xem kết quả bằng gcc -E khi debug macro/include.
 [x] 2 Macro:
-    Answer: Macro là luật thay thế token, không có type checking như function.
+    Macro thay token text nên không được type-check và có thể gây side effect. Đặt macro hằng bằng uppercase, parenthesize expression và ưu tiên enum/const/static inline khi chúng đáp ứng yêu cầu.
 [x] 2.1 Macro definition
-    Answer: Dùng #define NAME replacement; ưu tiên đặt tên uppercase và bao ngoặc các biểu thức.
+    #define NAME replacement không có dấu = hoặc ;. #define MAX(a,b) ((a)>(b)?(a):(b)) vẫn nguy hiểm với i++, nên contract macro phải cấm argument có side effect.
 [x] 2.2 Object-like Macros
-    Answer: Object-like macro thay tên hằng hoặc đoạn token, ví dụ #define MAX_SIZE 64.
+    Object macro phù hợp feature flag, include guard và compile-time constant. Với typed constant, ưu tiên static const hoặc enum để compiler báo lỗi kiểu tốt hơn.
 [x] 2.3 Function like Macros
-    Answer: Function-like macro nhận argument; phải bao ngoặc từng argument và toàn bộ kết quả, tránh side effect.
+    Function macro chỉ được nhận diện khi tên sát dấu (. Bao ngoặc từng parameter và toàn result; statement macro dùng do { ... } while (0) để hoạt động đúng trong if/else.
 [x] 3 C Preprocessor Directives
-    Answer: Directive bắt đầu bằng # và được xử lý trước compilation.
+    Các directive gồm #include, #define/#undef, #if family, #error, #line và #pragma. Chúng quyết định source được compile, vì vậy configuration phải ít, rõ và test được.
 [x] 3.1 Inclusion directive
-    Answer: #include <...> tìm header hệ thống; #include "..." ưu tiên đường dẫn dự án.
+    #include <header.h> tìm system include path; "header.h" tìm local trước. Header phải có include guard hoặc #pragma once; header chỉ chứa declaration/inline cần thiết, tránh định nghĩa global multiple times.
 [x] 3.2 Conditional compilation
-    Answer: #if, #ifdef, #ifndef, #elif, #else, #endif chọn phần mã theo macro/configuration.
+    #if defined(FEATURE) và #ifdef chọn mã theo build config. Dùng cho platform abstraction hoặc feature thật sự khác nhau, không dùng để che code chết; mọi nhánh quan trọng cần được build trong CI.
 [x] 3.3 Diagnostics Directive
-    Answer: #error dừng build có thông báo; #pragma là chỉ thị triển khai cụ thể, cần hạn chế phụ thuộc compiler.
+    #error báo lỗi build khi config sai; _Static_assert kiểm tra điều kiện compile-time trong C. #pragma phụ thuộc compiler, nên cô lập nó qua macro portability và có fallback/documentation.
 [x] 3.4 Preprocessor Operators
-    Answer: # stringize argument, ## nối token; dùng thận trọng vì làm giảm khả năng kiểm tra của compiler.
+    # biến macro argument thành string, ## nối token. Argument khi stringize/token-paste có quy tắc expansion riêng; chỉ dùng khi tạo identifier/string là mục tiêu thật sự, vì code khó tìm và refactor.
 [x] 4 Bit Operations
-    Answer: Bitwise operators thao tác trực tiếp bit của integer: &, |, ^, ~, << và >>.
+    Bitwise thao tác từng bit integer; nên dùng unsigned fixed-width type cho register/protocol. Đừng nhầm & | ^ với && ||; shift âm, shift quá bề rộng hoặc signed left shift có thể undefined behavior.
 [x] 4.1 And, or, xor, not, shift
-    Answer: AND để mask/clear, OR để set, XOR để toggle, NOT đảo bit, shift dịch vị trí bit.
+    x&mask giữ bit; x|mask set; x^mask toggle; ~x đảo; << và >> dịch. Dùng literal có suffix phù hợp như UINT32_C(1) << n để tránh promotion/sign lỗi.
 [x] 4.2 User case
-    Answer: Ứng dụng gồm flags, thanh ghi phần cứng, protocol packing và kiểm tra trạng thái.
+    Use case: flags, permission bitset, peripheral register và packed field. Trước bit operation, xác định rõ bit numbering, endianness khi serialize và concurrent access nếu register bị ISR/thread khác sửa.
 [x] 4.2.1 MASK, SHIFT
-    Answer: Mask chọn các bit cần dùng; shift đưa field về bit 0 hoặc về vị trí cần ghi.
+    Mask định vị bits, SHIFT là bit thấp nhất. Ví dụ MASK=0x70u, SHIFT=4; đọc field là (reg&MASK)>>SHIFT. Luôn mask value trước khi ghi để không tràn vào field khác.
 [x] 4.2.2 SET, CLEAR
-    Answer: Set: x |= mask; clear: x &= ~mask; chỉ dùng mask có kiểu unsigned phù hợp.
+    Set cờ: flags |= FLAG; clear: flags &= ~FLAG; test: (flags & FLAG) != 0u. Với thanh ghi hardware, kiểm tra datasheet vì nhiều register dùng write-one-to-clear/set và read-modify-write có thể không an toàn.
 [x] 4.2.3 Read/write bit MASK.
-    Answer: Read field: (x & MASK) >> SHIFT; write field: x = (x & ~MASK) | ((v << SHIFT) & MASK).
+    Viết field an toàn: reg=(reg&~MASK)|((value<<SHIFT)&MASK). Nếu concurrent, cần atomic/critical section hoặc register alias SET/CLR để tránh mất update.
 [x] 4.2.4 Example about Peripheral Access Layer
-    Answer: Dùng volatile uint32_t* hoặc struct register map để đọc/ghi MMIO; tuân theo tài liệu chip và thứ tự truy cập.
+    MMIO thường là volatile uint32_t hoặc struct volatile register map tại base address. volatile không tạo atomicity hay memory ordering; tuân thủ datasheet về reset value, reserved bits, barriers và sequence truy cập.
 
-B05 — Memory and Pointers
+B05 — Memory Management and Pointers
 [x] 1 Memory layout
-    Answer: Process thường có text/rodata, data, bss, heap và stack; layout thực tế phụ thuộc ABI/OS/linker.
+    Embedded/process thường chia .text, .rodata, .data, .bss, heap và stack. .data có initializer phải copy từ Flash lúc startup; .bss được zero; stack tăng/địa chỉ tùy ABI. Kiểm tra map file để biết vùng nào gần đầy.
 [x] 2 Variable and memory location
-    Answer: Mỗi object có storage, địa chỉ và lifetime; chỉ dùng địa chỉ khi object còn sống và được căn chỉnh đúng.
+    Object có size, alignment, storage duration và lifetime. Địa chỉ chỉ hợp lệ trong lifetime; dangling pointer sau free/return là lỗi. sizeof và _Alignof hỗ trợ kiểm tra layout, không suy đoán bằng địa chỉ hard-code.
 [x] 3 Linker file and memory
-    Answer: Linker script ánh xạ section vào vùng Flash/RAM, quyết định vị trí code, data, stack và heap trong embedded.
+    Linker script đặt section vào FLASH/RAM và định nghĩa symbol startup dùng để copy/zero. Cần reserve stack/heap, giữ vector table/sections quan trọng và kiểm tra overlap; sai linker script có thể build được nhưng boot lỗi.
 [x] 4 Pointer variable
-    Answer: Pointer có kiểu đích; pointer NULL biểu thị không trỏ object hợp lệ và không được dereference.
+    Pointer type mô tả object mà nó trỏ tới, giúp compiler scale arithmetic và kiểm tra type. Khởi tạo NULL là trạng thái “chưa có object”; luôn đặt pointer thành NULL sau free nếu nó còn được giữ để tránh use-after-free.
 [x] 5 Assigning values to a pointer
-    Answer: Gán bằng &object, NULL hoặc địa chỉ hợp lệ cùng kiểu; không ép địa chỉ tùy tiện.
+    int *p=&x là hợp lệ; p=(int*)1234 không portable/trừ MMIO được chỉ định; pointer khác type không nên ép tùy tiện. const qualification chỉ được thêm an toàn, còn bỏ const rồi ghi vào object const là undefined behavior.
 [x] 6 Memory allocation for a pointer
-    Answer: malloc/calloc/realloc cấp heap và cần kiểm tra NULL; free đúng một lần sau khi không còn dùng.
+    malloc(n) trả vùng uninitialized, calloc count×size trả zeroed, realloc có thể di chuyển vùng. Kiểm tra overflow count>SIZE_MAX/size, giữ temporary pointer khi realloc, free đúng một lần và không dùng memory sau free.
 [x] 7 Pointer arithmetic
-    Answer: p+1 dịch sizeof(*p) byte; chỉ hợp lệ trong cùng array object hoặc vị trí one-past-end.
+    Chỉ cộng/trừ pointer trong cùng array object; p+i scale theo sizeof *p. So sánh < > giữa pointer thuộc object khác không portable; không trừ pointer khác array. Với raw byte buffer, dùng unsigned char*.
 
 B06 — Data Structures and Algorithms
 [x] 1 Data structure
-    Answer: Data structure tổ chức dữ liệu để thao tác, truy cập và lưu trữ hiệu quả.
+    Data structure là cách biểu diễn collection và quan hệ dữ liệu để các operation có chi phí mong muốn. Không có cấu trúc tốt nhất tuyệt đối: lựa chọn dựa trên pattern access, bound memory, concurrency và latency.
 [x] 1.1 Data structure Fundamental
-    Answer: Chọn cấu trúc theo thao tác cần tối ưu: truy cập, tìm, chèn, xóa, duyệt và bộ nhớ.
+    Trước khi code, liệt kê operation và tần suất: lookup, insert, erase, traverse, min/max. Sau đó so sánh Big-O, locality, allocation, worst case và độ đơn giản; embedded thường ưu tiên worst-case và memory bounded.
 [x] 1.1.1 Think, how, classify data structure
-    Answer: Phân loại theo linear/non-linear, static/dynamic, homogeneous/non-homogeneous và quan hệ dữ liệu.
+    Linear structure có một chuỗi phần tử (array/list/stack/queue); non-linear gồm tree/graph. Static dùng capacity cố định, dynamic cấp node khi chạy; homogeneous chứa cùng kiểu, record/struct có field khác kiểu.
 [x] 1.1.2 Primitive/non-primitive data
-    Answer: Primitive là kiểu cơ bản; non-primitive là cấu trúc ghép như array, list, tree, graph và hash table.
+    Primitive là integer, char, floating, pointer; non-primitive tổ chức nhiều primitive/object như array, list, tree, hash. “Non-primitive” không tự động tốt hơn: nó thêm invariant, allocation và failure case cần quản lý.
 [x] 1.1.3 Design aspect
-    Answer: Thiết kế xét invariant, ownership, API, độ phức tạp, failure mode và giới hạn memory.
+    Thiết kế cần invariant (size đúng, link đúng), ownership, error policy, iterator invalidation và API boundary. Viết test cho empty, one element, full capacity, duplicate key và allocation failure.
 [x] 1.2 Example
-    Answer: Ví dụ danh sách task có thể dùng array khi số lượng cố định, linked list khi cần chèn/xóa linh hoạt.
+    Danh sách sensor cố định 16 phần tử có thể dùng array; scheduler theo deadline dùng min-heap; lookup theo ID dùng hash table. Chọn theo operation nóng thay vì quen tay dùng một cấu trúc.
 [x] 1.2.1 How to ogranize structure in C
-    Answer: Dùng struct mô tả node/record, pointer liên kết node và hàm API để bảo vệ invariant.
+    C dùng struct cho node và function để che implementation. Khởi tạo object rõ ràng, dùng destructor/free function, và không để caller tự sửa link nội bộ nếu API cần giữ invariant.
 [x] 1.2.2 Data orgainize in array
-    Answer: Array cache-friendly, truy cập O(1), nhưng chèn/xóa giữa thường O(n).
+    Array contiguous, cache-friendly, lookup index O(1), binary search O(log n) khi sorted. Chèn/xóa giữa O(n), capacity fixed hoặc realloc có thể invalidate pointer/iterator.
 [x] 1.2.3 Data orgainize in linked list
-    Answer: Linked list chèn/xóa node đã biết O(1), nhưng truy cập theo index O(n) và tốn pointer.
+    Node chứa data+next(/prev); chèn/xóa sau node biết trước O(1). Đổi lại lookup O(n), cache locality kém, allocation fragmentation và bug ownership/link phổ biến.
 [x] 1.2.4 Data orgainize with hierachy model
-    Answer: Tree biểu diễn quan hệ cha-con; traversal phổ biến là DFS và BFS.
+    Tree mô tả parent-child, ví dụ filesystem/menu. DFS dùng stack/recursion, BFS dùng queue; phải quy định ownership child, thứ tự traversal và xử lý cycle nếu cấu trúc thực ra là graph.
 [x] 1.2.5 Hashing
-    Answer: Hash table ánh xạ key thành bucket; trung bình tìm/chèn/xóa O(1), cần xử lý collision và resize.
+    Hash table map key tới bucket; load factor cao làm collision tăng. Collision xử lý bằng chaining hoặc open addressing; hash phải nhất quán với equality và resize/rehash cần xử lý allocation failure.
 [x] 2 Algorithm
-    Answer: Algorithm là chuỗi bước hữu hạn, rõ ràng và đúng để biến input thành output.
+    Algorithm là bước hữu hạn, xác định, có input/output để giải bài toán. Đánh giá bằng correctness proof/invariant trước, rồi mới time, space, code size và khả năng test.
 [x] 2.1 Collections and Collection operation
-    Answer: Collection hỗ trợ insert, delete, find, iterate, sort và size; mỗi cấu trúc có chi phí khác nhau.
+    API collection thường có init, destroy, size, empty, insert, erase, find và iterate. Contract phải nêu duplicate policy, ownership dữ liệu, invalidation khi mutation và error handling khi full/alloc fail.
 [x] 2.2 Analyzing an Algorithm
-    Answer: Phân tích time/space complexity bằng Big-O, worst/average case và benchmark dữ liệu thực tế.
+    Big-O mô tả tăng trưởng theo n, không thay thế benchmark. Phân tích best/average/worst case, memory auxiliary và hằng số; benchmark trên target/data thực vì cache, branch và allocator ảnh hưởng lớn.
 [x] 2.3 Non-primitive data structures
-    Answer: Đây là các cấu trúc ghép được xây từ primitive types và quan hệ giữa các phần tử.
+    Đây là cấu trúc xây từ object/node và relation. Chúng cần invariant và lifecycle management; wrapper API tốt giúp ngăn caller tạo cấu trúc hỏng.
 [x] 2.3.1 Arrays
-    Answer: Array phù hợp indexed access nhanh và dữ liệu liên tiếp.
+    Array cho indexed access O(1), scan nhanh nhờ locality. Dùng dynamic array nếu cần grow; reserve capacity và kiểm tra overflow trước realloc.
 [x] 2.3.2 Linked Lists
-    Answer: Linked list phù hợp khi cần thay đổi topology thường xuyên và không cần random access.
+    Singly list ít memory hơn doubly list; doubly list xóa node đã biết thuận tiện hơn. Sentinel node có thể giảm special case nhưng cần được khởi tạo/duy trì đúng.
 [x] 2.3.3 Binary Tree
-    Answer: Binary tree có tối đa hai con/node; BST cân bằng cho find/insert/delete gần O(log n).
+    Binary tree tối đa hai con; BST chỉ nhanh khi cân bằng. Cây lệch có operation O(n); AVL/red-black hoặc heap giải quyết mục tiêu cân bằng khác nhau.
 [x] 2.3.4 General Tree
-    Answer: General tree cho số con tùy ý; có thể biểu diễn bằng first-child/next-sibling.
+    General tree cho số child bất kỳ; biểu diễn bằng child array/vector hoặc first-child/next-sibling. Chọn representation theo việc traverse, thêm child và giới hạn memory.
 [x] 2.3.5 Heaps
-    Answer: Heap duy trì phần tử min/max ở root; push/pop O(log n), peek O(1).
+    Binary heap giữ min/max ở index 0; parent=(i-1)/2, children=2i+1/2i+2. Push/pop O(log n), peek O(1); heap không cho search arbitrary nhanh.
 [x] 2.3.6 Queues
-    Answer: Queue FIFO; enqueue ở cuối, dequeue ở đầu, thường cài bằng circular buffer hoặc linked list.
+    Queue FIFO; circular buffer tránh move dữ liệu và phù hợp bounded producer/consumer. Cần phân biệt empty/full bằng count hoặc chừa một slot; concurrency cần atomic/lock phù hợp.
 [x] 2.3.7 Stacks
-    Answer: Stack LIFO; push/pop ở đỉnh, dùng cho call stack, undo và parse.
+    Stack LIFO; array stack bounded dễ dự đoán, linked stack grow linh hoạt. Push/pop phải kiểm tra overflow/underflow; call stack là stack hệ thống, không nên bị tiêu tốn vô hạn.
 [x] 2.4 Sorting Algorithms
-    Answer: Sort sắp xếp dữ liệu; so sánh stability, O(n²) như insertion/bubble với O(n log n) như merge/heap/quicksort trung bình.
+    Stable sort giữ thứ tự equal keys; in-place tiết kiệm memory. Insertion sort tốt cho n nhỏ/gần sorted; merge sort O(n log n) stable nhưng cần memory; quicksort trung bình tốt nhưng worst O(n²); heapsort worst O(n log n).
 [x] 2.5 Searching Algorithms
-    Answer: Linear search O(n); binary search O(log n) nhưng yêu cầu dữ liệu đã sắp xếp và truy cập theo index.
+    Linear search dùng được trên dữ liệu bất kỳ, O(n). Binary search O(log n) nhưng array phải sorted và midpoint tránh overflow; hash lookup average O(1) nhưng không thay thế ordered range query.
 
 B07 — Advanced Pointers and Callbacks
 [x] Assigning pointer to address
-    Answer: Gán địa chỉ bằng &: int *p = &x; kiểu pointer phải tương thích với object.
+    Lấy address bằng &: int x; int *p=&x;. Address phải còn lifetime trong thời gian dùng p; không lưu address của local ra ngoài hàm. Kiểu pointer tương thích giúp compiler phát hiện sai lệnh dereference.
 [x] Wrong using pointer
-    Answer: Lỗi phổ biến: uninitialized/dangling/NULL pointer, out-of-bounds, double free và sai kiểu cast.
+    Lỗi gồm NULL/uninitialized dereference, out-of-bounds, dangling/use-after-free, double free và invalid cast. Bật -Wall -Wextra, ASan/UBSan, initialize pointer NULL và dùng ownership convention để phòng ngừa.
 [x] Pointer essence
-    Answer: Pointer chỉ là giá trị địa chỉ có kiểu; tính hợp lệ phụ thuộc object, lifetime, bounds và alignment.
+    Pointer là giá trị đại diện location nhưng không tự nói object còn sống hay có quyền truy cập. Tính đúng đòi hỏi provenance/lifetime, bounds, alignment, effective type và synchronization đều hợp lệ.
 [x] Function pointer
-    Answer: Function pointer lưu địa chỉ hàm có chữ ký tương thích, ví dụ int (*cmp)(const void*,const void*).
+    Signature phải khớp: int (*cmp)(const void*,const void*); gán hàm cùng signature và gọi cmp(a,b). Không cast function pointer để ép signature; sai calling convention/parameter là undefined behavior.
 [x] Callback function
-    Answer: Callback là function pointer truyền vào API để API gọi lại khi có sự kiện/kết quả; thường cần context pointer.
+    Callback cho framework gọi code của caller, thường truyền cả void *context để tránh global state. API phải nêu callback được gọi khi nào, thread/ISR context nào, có được retain context không và callback có được re-enter không.
 
 B08 — Optimization in C
 [x] why to optimize code
-    Answer: Tối ưu khi có yêu cầu đo được về latency, throughput, energy, memory hoặc binary size; ưu tiên tính đúng trước.
+    Tối ưu nhằm đạt requirement đo được: deadline, throughput, energy, RAM/Flash. Quy trình đúng: đo baseline, tìm hotspot, thay đổi nhỏ, test correctness, đo lại; không tối ưu “theo cảm giác” và không hy sinh safety.
 [x] trade off between speed and size
-    Answer: Tăng tốc có thể làm code lớn hơn, tốn RAM/Flash hoặc năng lượng hơn; chọn theo giới hạn hệ thống.
+    Unroll/inline có thể giảm cycles nhưng tăng Flash và icache miss; table lookup nhanh nhưng tốn ROM/RAM. Xác định resource là bottleneck và đo worst case trên hardware/optimization level thực tế.
 [x] Local optimization and global optimazation
-    Answer: Local tối ưu trong block/hàm; global xét toàn chương trình, call graph và dữ liệu liên hàm.
+    Local thay biểu thức trong block/hàm; global xét call graph, data flow và whole-program/LTO. Global có thể tốt hơn nhưng khó kiểm chứng hơn; luôn giữ profiling evidence.
 [x] Common sub-expression elimination
-    Answer: Tính lại biểu thức chung một lần khi operand không đổi rồi tái dùng kết quả.
+    Nếu (a*b+c) xuất hiện nhiều lần và a,b,c không đổi/không bị side effect, compiler tính một lần rồi reuse. volatile, aliasing và function call có thể cản CSE vì compiler phải giữ observable behavior.
 [x] Constant propagation
-    Answer: Thay biến biết hằng bằng giá trị hằng để compiler có thể fold biểu thức và bỏ nhánh.
+    Compiler thay biến có giá trị biết trước bằng literal, ví dụ flag compile-time, rồi constant-fold/loại nhánh. Dùng const không luôn là compile-time constant trong C; enum/macro phù hợp khi cần #if/static initializer.
 [x] Copy propagation
-    Answer: Thay biến bản sao bằng biến gốc khi an toàn, giảm move/copy thừa.
+    Sau b=a, dùng a thay b cho đến khi một biến bị ghi, giúp bỏ move/load. Aliasing, pointer write và volatile làm compiler phải thận trọng; source rõ và restrict hợp lệ có thể hỗ trợ.
 [x] Dead code elimination
-    Answer: Loại code không thể chạy hoặc kết quả không còn được dùng, miễn không có side effect cần thiết.
+    Code không reachable hoặc kết quả không dùng có thể bỏ nếu không có side effect. Đừng kỳ vọng compiler giữ write debug/secure wipe không observable; dùng API/barrier phù hợp khi cần bắt buộc.
 [x] Global register allocation
-    Answer: Phân bổ biến sống lâu vào register xuyên basic block để giảm load/store, có xét register pressure.
+    Compiler đặt live values vào register xuyên block để giảm spill/load. Quá nhiều biến sống cùng lúc tạo register pressure và spill; tách scope/giảm live range thường tốt hơn ép register keyword.
 [x] Inline calls
-    Answer: Thay lời gọi bằng thân hàm khi có lợi; giảm overhead nhưng có thể tăng code size.
+    Inline loại call/return và mở cơ hội optimize liên hàm, nhưng tăng code duplication. Dùng compiler report/profile để xác nhận; static inline chỉ là cách biểu đạt, không cam kết result.
 [x] Instruction scheduling
-    Answer: Sắp xếp instruction độc lập để che latency pipeline và tránh hazard theo kiến trúc CPU.
+    CPU pipeline có latency; compiler sắp xếp instruction độc lập để không stall. Đây là target-specific và thường compiler làm tốt; inline assembly sai constraints/barrier có thể phá scheduler.
 [x] Lifetime analysis
-    Answer: Xác định khoảng biến còn được dùng để tái sử dụng register/stack slot và phát hiện phạm vi không cần thiết.
+    Liveness xác định nơi giá trị còn được dùng; register allocator dựa vào nó. Source nên giới hạn scope biến, không giữ biến lớn/temporary sống qua đoạn dài khi không cần.
 [x] Loop invariant expressions (code motion)
-    Answer: Đưa biểu thức không thay đổi qua các vòng lặp ra ngoài loop nếu không đổi semantics.
+    Biểu thức không đổi giữa iteration có thể đưa ra ngoài loop, ví dụ limit=n*stride. Không hoist nếu expression có side effect, overflow/exception semantics khác, volatile access hoặc dữ liệu bị alias thay đổi.
 [x] Loop unrolling
-    Answer: Mở nhiều iteration trong một thân loop để giảm branch overhead và tăng ILP, đổi lại tăng code size.
+    Unroll xử lý nhiều element/lần để giảm branch và tăng ILP/vectorization. Nó cần xử lý remainder, có thể tăng binary và giảm icache; chỉ dùng sau benchmark.
 [x] Strength reduction
-    Answer: Thay phép toán đắt bằng phép rẻ tương đương, ví dụ multiplication theo bước lặp thành addition khi đúng kiểu/overflow.
+    Thay operation đắt bằng operation rẻ tương đương, như index += stride thay i*stride. Phải giữ đúng signed overflow, rounding và precision; compiler thường tự làm ở -O2.
 [x] Using compiler options
-    Answer: Dùng -O2/-Os, LTO và target-specific flags sau khi kiểm tra toolchain; không dùng flags thay cho benchmark.
+    Start -O2 cho speed cân bằng, -Os cho size; -flto có thể tối ưu liên file. Target flags chỉ dùng cho CPU thực; tránh -Ofast nếu chương trình cần strict floating-point/standards behavior.
 [x] Analyze code distribution in memory using Linker MAP file
-    Answer: MAP file cho biết symbol/section nằm ở đâu và chiếm bao nhiêu Flash/RAM, giúp tìm phần quá lớn.
+    MAP cho section, symbol size và address; xem .bss/.data làm đầy RAM, .text/.rodata làm đầy Flash, symbol bất thường lớn. So sánh map giữa build để tìm regression, không chỉ nhìn total binary size.
 [x] Profile the code
-    Answer: Profile bằng dữ liệu đại diện để tìm hotspot trước khi tối ưu; đo lại để xác nhận lợi ích và không regress.
+    Profile dùng workload đại diện và đo wall time/cycle counter/sampling. Phân biệt benchmark noise với thay đổi thật, tối ưu hotspot lớn nhất và luôn regression-test output/timing.
 
 B09 — Common C Defects
 [x] Alignment and packing
-    Answer: Object cần alignment phù hợp; packed struct có thể tạo truy cập unaligned, giảm hiệu năng hoặc lỗi trên một số CPU.
+    CPU có yêu cầu alignment; compiler chèn padding cho struct. packed có thể làm unaligned access chậm/fault và layout phụ thuộc ABI; khi parse wire format, copy bytes/marshal rõ thay vì cast pointer packed bừa bãi.
 [x] Macro, function like macro
-    Answer: Macro dễ gặp precedence và side-effect bugs; bao ngoặc, dùng do { } while (0) cho statement macro, ưu tiên inline function.
+    Macro có lỗi precedence, multiple evaluation và statement binding. Bao ngoặc, do { } while (0), không truyền i++ vào macro; ưu tiên inline function/enum/static const để nhận type checking và debugger support.
 [x] Overflow and underflow
-    Answer: Signed overflow là undefined behavior; unsigned wrap modulo 2^N; kiểm tra biên trước arithmetic và conversion.
+    Signed integer overflow là undefined behavior; unsigned wrap modulo 2^N; conversion hẹp có thể mất dữ liệu. Kiểm tra biên trước add/mul/sub và đặc biệt trước allocation size/count.
 [x] pointer to const and const pointer
-    Answer: const int *p không sửa *p qua p; int * const p không đổi địa chỉ p; const int * const p khóa cả hai.
+    const int *p: không sửa *p qua p; int * const p: p không đổi target; const int * const p: cả hai bất biến qua tên. const bảo vệ interface nhưng không thay ownership/lifetime checking.
 [x] signed and usigned type
-    Answer: So sánh signed/unsigned có thể convert bất ngờ; dùng kiểu cùng signedness và kích thước, đặc biệt với size_t.
+    Khi so sánh signed với unsigned, signed có thể convert thành unsigned lớn bất ngờ, ví dụ -1 < size_t thường false. Dùng type nhất quán, validate trước cast và in đúng format specifier PRIu/PRId khi cần.
 [x] string and characters
-    Answer: 'a' là character constant, "a" là string có '\0'; buffer chuỗi phải đủ chỗ cho terminator.
+    'a' là integer character constant, "a" là array char {'a','\0'}. strlen cần terminator, không an toàn trên buffer tùy ý; dùng length explicit cho binary và snprintf/fgets cho text.
 [x] Precedence
-    Answer: Precedence quyết định thứ tự toán tử; khi logic quan trọng, thêm ngoặc thay vì dựa vào việc nhớ bảng ưu tiên.
+    a & b == 0 thường được parse là a & (b==0), không phải (a&b)==0. Parentheses làm ý định rõ hơn và tránh review bug; đừng dựa vào nhớ precedence cho biểu thức hỗn hợp.
 [x] Loosing dynamic allocated memory
-    Answer: Memory leak xảy ra khi mất mọi pointer tới allocation chưa free; xác định ownership rõ và dùng sanitizer/valgrind khi có thể.
+    Leak xảy ra khi allocation vẫn tồn tại nhưng không còn path để free. Gán malloc mới đè pointer cũ cũng leak; định nghĩa ownership, một cleanup path, free tất cả field và chạy ASan/Valgrind khi có thể.
 
 B10 — File Handling
 [x] how file is oganized in disk
-    Answer: File là dãy byte được filesystem ánh xạ qua metadata và block/cluster trên thiết bị lưu trữ.
+    File là logical byte stream; filesystem ánh xạ offset tới block/extent và lưu metadata như size, owner, timestamps. Application không nên giả định file liên tiếp vật lý hay một write tương ứng một disk block.
 [x] how OS manage files
-    Answer: OS quản lý pathname, permission, metadata, file descriptor/handle, cache và filesystem driver.
+    OS phân giải pathname, kiểm tra permission, cấp file descriptor/handle, cache page và giao tiếp filesystem driver. Close giải phóng handle; crash/power loss có thể mất dữ liệu chưa durable dù write đã return.
 [x] how application read/write file
-    Answer: Application mở file, đọc/ghi byte qua API, xử lý lỗi, flush/close và không giả định một lần read/write là đủ.
+    Mở file, kiểm tra lỗi, đọc/ghi có thể partial, xử lý EOF/error, rồi close. Với dữ liệu quan trọng, dùng temp file + fsync/rename theo platform để atomic update; luôn validate format/size khi đọc input.
 [x] stream in OS, file stream
-    Answer: Stream là luồng byte tuần tự; C stdio bọc descriptor/handle bằng FILE* và có buffering.
+    OS file descriptor là handle thấp cấp; stdio FILE* bọc nó và thêm buffering/text conversion. Buffer tăng hiệu năng nhưng làm thời điểm dữ liệu tới OS khác với thời điểm fprintf/fwrite được gọi.
 [x] text stream and binary stream
-    Answer: Text stream có thể chuyển newline theo platform; binary stream giữ byte nguyên trạng, phù hợp dữ liệu định dạng/protocol.
+    Text mode có thể chuyển newline theo platform và có semantics đặc biệt; binary mode giữ byte nguyên. Dùng "rb"/"wb" cho image/protocol/record binary; format text cần encoding và parsing lỗi rõ ràng.
 [x] File pointer
-    Answer: FILE* đại diện stream stdio, được tạo bởi fopen và giải phóng bằng fclose.
+    FILE* là opaque stream từ fopen/fdopen/tmpfile. Không dereference FILE*; dùng API stdio và luôn fclose ở mọi exit path. fopen thất bại trả NULL và errno giải thích nguyên nhân.
 [x] Active file pointer
-    Answer: Vị trí file hiện tại quyết định byte kế tiếp read/write; có thể xem/chuyển bằng ftell/fseek/rewind.
+    File position indicator quyết định vị trí read/write tiếp theo. Sequential read tăng position; ftell lấy offset, fseek thay đổi offset. Không giả định offset kiểu long đủ cho file rất lớn nếu platform có API riêng.
 [x] open and close file
-    Answer: fopen với mode phù hợp và kiểm tra NULL; fclose luôn gọi khi hoàn tất để flush buffer và giải phóng resource.
+    Mode: "r" read, "w" truncate/create write, "a" append, thêm "+" cho update, "b" cho binary. "w" phá nội dung cũ nên chỉ dùng khi chủ ý; fclose flush stdio và báo lỗi flush qua return value.
 [x] APIs for read, write file
-    Answer: Dùng fgetc/fgets/fread để đọc, fputc/fputs/fprintf/fwrite để ghi; luôn kiểm tra return value và ferror/feof đúng ngữ cảnh.
+    fgets đọc tối đa n-1 và thêm terminator; fread/fwrite trả số item hoàn chỉnh, không phải bool. Luôn kiểm tra return, ferror và feof đúng lúc; không dùng while(!feof(f)) vì EOF chỉ được set sau lần đọc thất bại.
 [x] manage Active file pointer
-    Answer: fseek thiết lập offset, ftell lấy offset, rewind về đầu; quy tắc chuyển read/write trên update stream cần fflush hoặc reposition.
+    fseek(f,off,SEEK_SET/CUR/END), ftell và rewind quản lý vị trí. Với stream update, sau output rồi input (hoặc ngược lại) phải fflush hoặc reposition theo chuẩn; seek trên pipe/terminal có thể fail.
 [x] fflush
-    Answer: fflush(FILE*) đẩy buffer output của stdio xuống OS; không tự bảo đảm dữ liệu đã bền vững trên ổ đĩa.
+    fflush(FILE*) đẩy output buffer của C library xuống OS nhưng không chắc dữ liệu đã bền trên physical disk. fsync/_commit là API tầng OS khi durability cần thiết; fflush(stdin) không portable.
 [x] Overview about srecord format
-    Answer: Motorola S-record là text hex gồm loại record, byte count, address, data và checksum; dùng để truyền firmware.
+    Motorola S-record là dòng ASCII: S + type + count + address + data + checksum. Type xác định address width/data/start record; checksum là ones-complement của tổng byte count..data. Parser cần validate hex, count, checksum và record ordering.
