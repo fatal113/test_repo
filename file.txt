@@ -1,0 +1,307 @@
+C LANGUAGE STUDY NOTES — B00 TO B10
+Nguồn: các outline [x] trong material.md, nhánh master.
+Mỗi dòng là một câu trả lời/nghi chú ngắn để ôn tập.
+
+B00 — C Basics Refresher
+[x] Cấu trúc chương trình C17, kiểu dữ liệu, toán tử và luồng điều khiển
+    Answer: Chương trình C gồm tiền xử lý, khai báo, hàm main và các hàm; dùng kiểu số/ký tự, toán tử và if/switch/loop để điều khiển luồng.
+[x] Hàm, prototype, phạm vi và vòng đời biến cơ bản
+    Answer: Prototype khai báo chữ ký trước khi gọi; biến local sống trong block/lời gọi, static sống toàn chương trình, global có phạm vi file/chương trình.
+[x] Mảng, chuỗi ký tự và thao tác dữ liệu có giới hạn
+    Answer: Mảng có kích thước cố định; chuỗi C kết thúc bằng '\0'; luôn truyền kích thước buffer và dùng hàm có giới hạn để tránh tràn.
+[x] Con trỏ cơ bản, const-correctness và quy trình biên dịch/gỡ lỗi với GCC
+    Answer: Con trỏ lưu địa chỉ; const thể hiện dữ liệu/địa chỉ không được sửa; biên dịch với -Wall -Wextra -g và gỡ lỗi bằng gdb/sanitizer.
+
+B01 — Variables and Data Types
+[x] Introductory question?
+    Answer: Biến là vùng nhớ có tên, kiểu dữ liệu quyết định kích thước, miền giá trị và cách diễn giải bit.
+[x] Basic Data Types
+    Answer: Các kiểu cơ bản là char, integer, float/double, void và các biến thể signed/unsigned/short/long.
+[x] Store Class
+    Answer: auto, register, static và extern quy định storage duration, linkage và phạm vi truy cập.
+[x] Key word for variable
+    Answer: Từ khóa thường gặp: const, volatile, restrict, static, extern, typedef và _Atomic; mỗi từ khóa thay đổi ngữ nghĩa hoặc tối ưu hóa.
+[x] Pointer variable
+    Answer: Biến con trỏ chứa địa chỉ của đối tượng có kiểu xác định; phải khởi tạo hợp lệ trước khi dereference.
+[x] Struct Data type
+    Answer: struct gom nhiều trường có thể khác kiểu thành một bản ghi; layout có thể có padding để bảo đảm alignment.
+[x] Structure
+    Answer: Khai báo struct bằng các field; dùng . cho object và -> cho pointer tới struct.
+[x] Union
+    Answer: union cho các thành viên dùng chung một vùng nhớ; chỉ nên đọc thành viên đang được ghi hợp lệ gần nhất.
+[x] Enum
+    Answer: enum đặt tên cho các hằng số nguyên, giúp mã nguồn dễ đọc và giảm magic number.
+[x] Casting
+    Answer: Cast chuyển kiểu biểu diễn/diễn giải giá trị; dùng cẩn thận vì có thể mất dữ liệu, đổi dấu hoặc vi phạm aliasing.
+
+B02 — Arrays, Decisions and Loops
+[x] 1 Array in C
+    Answer: Array là dãy phần tử cùng kiểu, liên tiếp trong bộ nhớ và có chỉ số từ 0 đến n-1.
+[x] 1.1 What is Array?
+    Answer: Array cho phép lưu và xử lý nhiều giá trị đồng nhất bằng một tên và chỉ số.
+[x] 1.2 Multidimensional Arrays
+    Answer: Mảng đa chiều là mảng của mảng; C lưu theo row-major order, nên chiều cuối cần biết khi truyền vào hàm.
+[x] 1.3 Array in memory
+    Answer: Phần tử nằm liên tiếp; địa chỉ a[i] tương đương *(a+i), với bước nhảy bằng sizeof phần tử.
+[x] 1.4 How to declare an Array?
+    Answer: Ví dụ int a[10]; hoặc int a[] = {1,2,3}; kích thước phải đủ cho initializer.
+[x] 1.5 How works with array?
+    Answer: Truy cập bằng index hợp lệ, duyệt bằng vòng lặp; C không tự kiểm tra boundary.
+[x] 1.6 When will using Array?
+    Answer: Dùng array khi số phần tử tối đa biết trước, phần tử cùng kiểu và cần truy cập theo chỉ số nhanh.
+[x] 2 Decision in C
+    Answer: Decision chọn nhánh thực thi dựa trên biểu thức điều kiện có giá trị khác 0 hoặc bằng 0.
+[x] 2.1 Introduce
+    Answer: C cung cấp if/else, switch và toán tử ?: để rẽ nhánh.
+[x] 2.2 How to build an expression?
+    Answer: Kết hợp toán tử số học, so sánh, logic và bitwise theo precedence; thêm ngoặc để làm rõ ý định.
+[x] 2.3 If, else, condition Operator “?:”
+    Answer: if/else xử lý điều kiện tổng quát; ?: trả về một trong hai biểu thức và phù hợp với lựa chọn ngắn.
+[x] 2.4 Switch
+    Answer: switch chọn case theo giá trị integral/enum; dùng break để tránh fall-through khi không chủ ý.
+[x] 3 Looping In C
+    Answer: for, while và do-while lặp khối lệnh; điều kiện phải có đường thoát rõ ràng.
+[x] 3.1 What is looping in C?
+    Answer: Loop lặp lại công việc cho đến khi điều kiện dừng, thường dùng để duyệt dữ liệu hoặc chờ trạng thái.
+[x] 3.3 Enter and exit, break looping follow
+    Answer: break thoát loop/switch gần nhất; continue bỏ phần còn lại của lần lặp hiện tại; return thoát hàm.
+[x] 3.4 How to use looping?
+    Answer: Chọn for khi có bước đếm rõ, while khi kiểm tra trước, do-while khi thân phải chạy ít nhất một lần.
+[x] 3.5 Key for Looping
+    Answer: Khởi tạo đúng, điều kiện đúng, cập nhật đúng, tránh truy cập vượt mảng và tránh vòng lặp vô hạn.
+
+B03 — Functions
+[x] 1 What is function
+    Answer: Function là khối mã tái sử dụng nhận tham số và có thể trả về kết quả.
+[x] 1.1 Syntax
+    Answer: Cú pháp cơ bản: return_type name(parameter_list) { body }.
+[x] 1.2 Declaration and function prototype
+    Answer: Prototype cho compiler biết kiểu trả về và tham số trước khi hàm được gọi.
+[x] 1.3 Global function, Local function, function in single translate unit
+    Answer: Hàm file-scope có external linkage mặc định; static function có internal linkage trong một translation unit; C chuẩn không có local/nested function.
+[x] 2 Inline keyword, inline function
+    Answer: inline là gợi ý/điều chỉnh linkage cho compiler, không bảo đảm hàm sẽ được inline.
+[x] 2.1 Compiler optimization use-case
+    Answer: Compiler có thể inline hàm nhỏ/hot để giảm overhead call, nhưng dựa vào tối ưu và profile.
+[x] 2.2 Different in size, speed analysis
+    Answer: Inline có thể nhanh hơn do bỏ call overhead nhưng làm binary lớn hơn và gây pressure instruction cache.
+[x] 3 Phân biệt macro-like function và function
+    Answer: Macro thay thế text, có thể đánh giá argument nhiều lần; function được type-check, đánh giá tham số một lần và dễ debug hơn.
+[x] 4 Variable argument list
+    Answer: Variadic function dùng va_list, va_start, va_arg, va_end; phải có quy ước kiểu/số lượng tham số rõ ràng.
+[x] 5 Function argument, function return
+    Answer: C truyền argument theo value; trả về một giá trị, còn nhiều kết quả thường dùng pointer output hoặc struct.
+[x] 5.1 Passing argument as value
+    Answer: Hàm nhận bản sao; sửa tham số không làm thay đổi biến của caller.
+[x] 5.2 Passing argument as reference
+    Answer: C mô phỏng pass-by-reference bằng cách truyền địa chỉ qua pointer và dereference trong hàm.
+[x] 5.3 example
+    Answer: void swap(int *a,int *b) đổi hai giá trị sau khi kiểm tra pointer khác NULL.
+[x] Multiple input/multiple output function
+    Answer: Nhận nhiều input qua tham số và trả nhiều output qua pointer hoặc một struct result.
+[x] Passing array as argument
+    Answer: Array decay thành pointer; luôn truyền length riêng và khai báo chiều sau với mảng đa chiều.
+[x] return/passing pointer to diffrent kind of object
+    Answer: Không trả về địa chỉ biến local; chỉ chuyển đổi pointer khi alignment, lifetime và strict-aliasing đều hợp lệ.
+[x] nested function
+    Answer: C chuẩn không hỗ trợ nested function; dùng static helper ở file scope hoặc callback/context thay thế.
+[x] 6 Recursion
+    Answer: Recursion là hàm gọi lại chính nó và cần base case để dừng.
+[x] 6.1 introduction to stack
+    Answer: Mỗi lời gọi dùng stack frame chứa tham số, local và địa chỉ trở về; recursion sâu có thể stack overflow.
+[x] 6.2 how to create a recursion function
+    Answer: Xác định base case, bước giảm bài toán và bảo đảm mỗi lần gọi tiến gần base case.
+
+B04 — Preprocessor, Macros and Bits
+[x] 1 C Preprocessor Overview
+    Answer: Preprocessor xử lý #include, #define và conditional compilation trước khi compiler dịch mã C.
+[x] 2 Macro:
+    Answer: Macro là luật thay thế token, không có type checking như function.
+[x] 2.1 Macro definition
+    Answer: Dùng #define NAME replacement; ưu tiên đặt tên uppercase và bao ngoặc các biểu thức.
+[x] 2.2 Object-like Macros
+    Answer: Object-like macro thay tên hằng hoặc đoạn token, ví dụ #define MAX_SIZE 64.
+[x] 2.3 Function like Macros
+    Answer: Function-like macro nhận argument; phải bao ngoặc từng argument và toàn bộ kết quả, tránh side effect.
+[x] 3 C Preprocessor Directives
+    Answer: Directive bắt đầu bằng # và được xử lý trước compilation.
+[x] 3.1 Inclusion directive
+    Answer: #include <...> tìm header hệ thống; #include "..." ưu tiên đường dẫn dự án.
+[x] 3.2 Conditional compilation
+    Answer: #if, #ifdef, #ifndef, #elif, #else, #endif chọn phần mã theo macro/configuration.
+[x] 3.3 Diagnostics Directive
+    Answer: #error dừng build có thông báo; #pragma là chỉ thị triển khai cụ thể, cần hạn chế phụ thuộc compiler.
+[x] 3.4 Preprocessor Operators
+    Answer: # stringize argument, ## nối token; dùng thận trọng vì làm giảm khả năng kiểm tra của compiler.
+[x] 4 Bit Operations
+    Answer: Bitwise operators thao tác trực tiếp bit của integer: &, |, ^, ~, << và >>.
+[x] 4.1 And, or, xor, not, shift
+    Answer: AND để mask/clear, OR để set, XOR để toggle, NOT đảo bit, shift dịch vị trí bit.
+[x] 4.2 User case
+    Answer: Ứng dụng gồm flags, thanh ghi phần cứng, protocol packing và kiểm tra trạng thái.
+[x] 4.2.1 MASK, SHIFT
+    Answer: Mask chọn các bit cần dùng; shift đưa field về bit 0 hoặc về vị trí cần ghi.
+[x] 4.2.2 SET, CLEAR
+    Answer: Set: x |= mask; clear: x &= ~mask; chỉ dùng mask có kiểu unsigned phù hợp.
+[x] 4.2.3 Read/write bit MASK.
+    Answer: Read field: (x & MASK) >> SHIFT; write field: x = (x & ~MASK) | ((v << SHIFT) & MASK).
+[x] 4.2.4 Example about Peripheral Access Layer
+    Answer: Dùng volatile uint32_t* hoặc struct register map để đọc/ghi MMIO; tuân theo tài liệu chip và thứ tự truy cập.
+
+B05 — Memory and Pointers
+[x] 1 Memory layout
+    Answer: Process thường có text/rodata, data, bss, heap và stack; layout thực tế phụ thuộc ABI/OS/linker.
+[x] 2 Variable and memory location
+    Answer: Mỗi object có storage, địa chỉ và lifetime; chỉ dùng địa chỉ khi object còn sống và được căn chỉnh đúng.
+[x] 3 Linker file and memory
+    Answer: Linker script ánh xạ section vào vùng Flash/RAM, quyết định vị trí code, data, stack và heap trong embedded.
+[x] 4 Pointer variable
+    Answer: Pointer có kiểu đích; pointer NULL biểu thị không trỏ object hợp lệ và không được dereference.
+[x] 5 Assigning values to a pointer
+    Answer: Gán bằng &object, NULL hoặc địa chỉ hợp lệ cùng kiểu; không ép địa chỉ tùy tiện.
+[x] 6 Memory allocation for a pointer
+    Answer: malloc/calloc/realloc cấp heap và cần kiểm tra NULL; free đúng một lần sau khi không còn dùng.
+[x] 7 Pointer arithmetic
+    Answer: p+1 dịch sizeof(*p) byte; chỉ hợp lệ trong cùng array object hoặc vị trí one-past-end.
+
+B06 — Data Structures and Algorithms
+[x] 1 Data structure
+    Answer: Data structure tổ chức dữ liệu để thao tác, truy cập và lưu trữ hiệu quả.
+[x] 1.1 Data structure Fundamental
+    Answer: Chọn cấu trúc theo thao tác cần tối ưu: truy cập, tìm, chèn, xóa, duyệt và bộ nhớ.
+[x] 1.1.1 Think, how, classify data structure
+    Answer: Phân loại theo linear/non-linear, static/dynamic, homogeneous/non-homogeneous và quan hệ dữ liệu.
+[x] 1.1.2 Primitive/non-primitive data
+    Answer: Primitive là kiểu cơ bản; non-primitive là cấu trúc ghép như array, list, tree, graph và hash table.
+[x] 1.1.3 Design aspect
+    Answer: Thiết kế xét invariant, ownership, API, độ phức tạp, failure mode và giới hạn memory.
+[x] 1.2 Example
+    Answer: Ví dụ danh sách task có thể dùng array khi số lượng cố định, linked list khi cần chèn/xóa linh hoạt.
+[x] 1.2.1 How to ogranize structure in C
+    Answer: Dùng struct mô tả node/record, pointer liên kết node và hàm API để bảo vệ invariant.
+[x] 1.2.2 Data orgainize in array
+    Answer: Array cache-friendly, truy cập O(1), nhưng chèn/xóa giữa thường O(n).
+[x] 1.2.3 Data orgainize in linked list
+    Answer: Linked list chèn/xóa node đã biết O(1), nhưng truy cập theo index O(n) và tốn pointer.
+[x] 1.2.4 Data orgainize with hierachy model
+    Answer: Tree biểu diễn quan hệ cha-con; traversal phổ biến là DFS và BFS.
+[x] 1.2.5 Hashing
+    Answer: Hash table ánh xạ key thành bucket; trung bình tìm/chèn/xóa O(1), cần xử lý collision và resize.
+[x] 2 Algorithm
+    Answer: Algorithm là chuỗi bước hữu hạn, rõ ràng và đúng để biến input thành output.
+[x] 2.1 Collections and Collection operation
+    Answer: Collection hỗ trợ insert, delete, find, iterate, sort và size; mỗi cấu trúc có chi phí khác nhau.
+[x] 2.2 Analyzing an Algorithm
+    Answer: Phân tích time/space complexity bằng Big-O, worst/average case và benchmark dữ liệu thực tế.
+[x] 2.3 Non-primitive data structures
+    Answer: Đây là các cấu trúc ghép được xây từ primitive types và quan hệ giữa các phần tử.
+[x] 2.3.1 Arrays
+    Answer: Array phù hợp indexed access nhanh và dữ liệu liên tiếp.
+[x] 2.3.2 Linked Lists
+    Answer: Linked list phù hợp khi cần thay đổi topology thường xuyên và không cần random access.
+[x] 2.3.3 Binary Tree
+    Answer: Binary tree có tối đa hai con/node; BST cân bằng cho find/insert/delete gần O(log n).
+[x] 2.3.4 General Tree
+    Answer: General tree cho số con tùy ý; có thể biểu diễn bằng first-child/next-sibling.
+[x] 2.3.5 Heaps
+    Answer: Heap duy trì phần tử min/max ở root; push/pop O(log n), peek O(1).
+[x] 2.3.6 Queues
+    Answer: Queue FIFO; enqueue ở cuối, dequeue ở đầu, thường cài bằng circular buffer hoặc linked list.
+[x] 2.3.7 Stacks
+    Answer: Stack LIFO; push/pop ở đỉnh, dùng cho call stack, undo và parse.
+[x] 2.4 Sorting Algorithms
+    Answer: Sort sắp xếp dữ liệu; so sánh stability, O(n²) như insertion/bubble với O(n log n) như merge/heap/quicksort trung bình.
+[x] 2.5 Searching Algorithms
+    Answer: Linear search O(n); binary search O(log n) nhưng yêu cầu dữ liệu đã sắp xếp và truy cập theo index.
+
+B07 — Advanced Pointers and Callbacks
+[x] Assigning pointer to address
+    Answer: Gán địa chỉ bằng &: int *p = &x; kiểu pointer phải tương thích với object.
+[x] Wrong using pointer
+    Answer: Lỗi phổ biến: uninitialized/dangling/NULL pointer, out-of-bounds, double free và sai kiểu cast.
+[x] Pointer essence
+    Answer: Pointer chỉ là giá trị địa chỉ có kiểu; tính hợp lệ phụ thuộc object, lifetime, bounds và alignment.
+[x] Function pointer
+    Answer: Function pointer lưu địa chỉ hàm có chữ ký tương thích, ví dụ int (*cmp)(const void*,const void*).
+[x] Callback function
+    Answer: Callback là function pointer truyền vào API để API gọi lại khi có sự kiện/kết quả; thường cần context pointer.
+
+B08 — Optimization in C
+[x] why to optimize code
+    Answer: Tối ưu khi có yêu cầu đo được về latency, throughput, energy, memory hoặc binary size; ưu tiên tính đúng trước.
+[x] trade off between speed and size
+    Answer: Tăng tốc có thể làm code lớn hơn, tốn RAM/Flash hoặc năng lượng hơn; chọn theo giới hạn hệ thống.
+[x] Local optimization and global optimazation
+    Answer: Local tối ưu trong block/hàm; global xét toàn chương trình, call graph và dữ liệu liên hàm.
+[x] Common sub-expression elimination
+    Answer: Tính lại biểu thức chung một lần khi operand không đổi rồi tái dùng kết quả.
+[x] Constant propagation
+    Answer: Thay biến biết hằng bằng giá trị hằng để compiler có thể fold biểu thức và bỏ nhánh.
+[x] Copy propagation
+    Answer: Thay biến bản sao bằng biến gốc khi an toàn, giảm move/copy thừa.
+[x] Dead code elimination
+    Answer: Loại code không thể chạy hoặc kết quả không còn được dùng, miễn không có side effect cần thiết.
+[x] Global register allocation
+    Answer: Phân bổ biến sống lâu vào register xuyên basic block để giảm load/store, có xét register pressure.
+[x] Inline calls
+    Answer: Thay lời gọi bằng thân hàm khi có lợi; giảm overhead nhưng có thể tăng code size.
+[x] Instruction scheduling
+    Answer: Sắp xếp instruction độc lập để che latency pipeline và tránh hazard theo kiến trúc CPU.
+[x] Lifetime analysis
+    Answer: Xác định khoảng biến còn được dùng để tái sử dụng register/stack slot và phát hiện phạm vi không cần thiết.
+[x] Loop invariant expressions (code motion)
+    Answer: Đưa biểu thức không thay đổi qua các vòng lặp ra ngoài loop nếu không đổi semantics.
+[x] Loop unrolling
+    Answer: Mở nhiều iteration trong một thân loop để giảm branch overhead và tăng ILP, đổi lại tăng code size.
+[x] Strength reduction
+    Answer: Thay phép toán đắt bằng phép rẻ tương đương, ví dụ multiplication theo bước lặp thành addition khi đúng kiểu/overflow.
+[x] Using compiler options
+    Answer: Dùng -O2/-Os, LTO và target-specific flags sau khi kiểm tra toolchain; không dùng flags thay cho benchmark.
+[x] Analyze code distribution in memory using Linker MAP file
+    Answer: MAP file cho biết symbol/section nằm ở đâu và chiếm bao nhiêu Flash/RAM, giúp tìm phần quá lớn.
+[x] Profile the code
+    Answer: Profile bằng dữ liệu đại diện để tìm hotspot trước khi tối ưu; đo lại để xác nhận lợi ích và không regress.
+
+B09 — Common C Defects
+[x] Alignment and packing
+    Answer: Object cần alignment phù hợp; packed struct có thể tạo truy cập unaligned, giảm hiệu năng hoặc lỗi trên một số CPU.
+[x] Macro, function like macro
+    Answer: Macro dễ gặp precedence và side-effect bugs; bao ngoặc, dùng do { } while (0) cho statement macro, ưu tiên inline function.
+[x] Overflow and underflow
+    Answer: Signed overflow là undefined behavior; unsigned wrap modulo 2^N; kiểm tra biên trước arithmetic và conversion.
+[x] pointer to const and const pointer
+    Answer: const int *p không sửa *p qua p; int * const p không đổi địa chỉ p; const int * const p khóa cả hai.
+[x] signed and usigned type
+    Answer: So sánh signed/unsigned có thể convert bất ngờ; dùng kiểu cùng signedness và kích thước, đặc biệt với size_t.
+[x] string and characters
+    Answer: 'a' là character constant, "a" là string có '\0'; buffer chuỗi phải đủ chỗ cho terminator.
+[x] Precedence
+    Answer: Precedence quyết định thứ tự toán tử; khi logic quan trọng, thêm ngoặc thay vì dựa vào việc nhớ bảng ưu tiên.
+[x] Loosing dynamic allocated memory
+    Answer: Memory leak xảy ra khi mất mọi pointer tới allocation chưa free; xác định ownership rõ và dùng sanitizer/valgrind khi có thể.
+
+B10 — File Handling
+[x] how file is oganized in disk
+    Answer: File là dãy byte được filesystem ánh xạ qua metadata và block/cluster trên thiết bị lưu trữ.
+[x] how OS manage files
+    Answer: OS quản lý pathname, permission, metadata, file descriptor/handle, cache và filesystem driver.
+[x] how application read/write file
+    Answer: Application mở file, đọc/ghi byte qua API, xử lý lỗi, flush/close và không giả định một lần read/write là đủ.
+[x] stream in OS, file stream
+    Answer: Stream là luồng byte tuần tự; C stdio bọc descriptor/handle bằng FILE* và có buffering.
+[x] text stream and binary stream
+    Answer: Text stream có thể chuyển newline theo platform; binary stream giữ byte nguyên trạng, phù hợp dữ liệu định dạng/protocol.
+[x] File pointer
+    Answer: FILE* đại diện stream stdio, được tạo bởi fopen và giải phóng bằng fclose.
+[x] Active file pointer
+    Answer: Vị trí file hiện tại quyết định byte kế tiếp read/write; có thể xem/chuyển bằng ftell/fseek/rewind.
+[x] open and close file
+    Answer: fopen với mode phù hợp và kiểm tra NULL; fclose luôn gọi khi hoàn tất để flush buffer và giải phóng resource.
+[x] APIs for read, write file
+    Answer: Dùng fgetc/fgets/fread để đọc, fputc/fputs/fprintf/fwrite để ghi; luôn kiểm tra return value và ferror/feof đúng ngữ cảnh.
+[x] manage Active file pointer
+    Answer: fseek thiết lập offset, ftell lấy offset, rewind về đầu; quy tắc chuyển read/write trên update stream cần fflush hoặc reposition.
+[x] fflush
+    Answer: fflush(FILE*) đẩy buffer output của stdio xuống OS; không tự bảo đảm dữ liệu đã bền vững trên ổ đĩa.
+[x] Overview about srecord format
+    Answer: Motorola S-record là text hex gồm loại record, byte count, address, data và checksum; dùng để truyền firmware.
